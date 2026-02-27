@@ -170,3 +170,8 @@
 /home/Yewint/Desktop/Remarket_Api/Api/obj/Debug/net10.0/Api.pdb
 /home/Yewint/Desktop/Remarket_Api/Api/obj/Debug/net10.0/Api.genruntimeconfig.cache
 /home/Yewint/Desktop/Remarket_Api/Api/obj/Debug/net10.0/ref/Api.dll
+/home/Yewint/Desktop/Remarket_Api/Api/bin/Debug/net10.0/BouncyCastle.Cryptography.dll
+/home/Yewint/Desktop/Remarket_Api/Api/bin/Debug/net10.0/MailKit.dll
+/home/Yewint/Desktop/Remarket_Api/Api/bin/Debug/net10.0/MimeKit.dll
+/home/Yewint/Desktop/Remarket_Api/Api/obj/Debug/net10.0/Api.sourcelink.json
+/home/Yewint/Desktop/Remarket_Api/Api/bin/Debug/net10.0/Api.staticwebassets.runtime.json

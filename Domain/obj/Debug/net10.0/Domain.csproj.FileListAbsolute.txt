@@ -9,3 +9,4 @@
 /home/Yewint/Desktop/Remarket_Api/Domain/obj/Debug/net10.0/refint/Domain.dll
 /home/Yewint/Desktop/Remarket_Api/Domain/obj/Debug/net10.0/Domain.pdb
 /home/Yewint/Desktop/Remarket_Api/Domain/obj/Debug/net10.0/ref/Domain.dll
+/home/Yewint/Desktop/Remarket_Api/Domain/obj/Debug/net10.0/Domain.sourcelink.json

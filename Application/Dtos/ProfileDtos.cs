@@ -4,7 +4,8 @@ public record ProfileRequestDto(
     
     string UserName,
     string Email,
-    string PhoneNumber
+    string PhoneNumber,
+    string? ImageUrl
 );
 
 public record VarifyProfileRequestDto(

@@ -19,3 +19,12 @@ public record PostResponseDto(
     List<string> ImageUrls,
     DateTime CreatedAt
 );
+
+public record UpdatePostDto(
+    string ItemName,
+    decimal Price,
+    string Description,
+    string ItemCondition,
+    string ItemStatus,
+    List<string> ImageUrls
+);

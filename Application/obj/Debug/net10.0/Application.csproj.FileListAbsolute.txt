@@ -13,3 +13,4 @@
 /home/Yewint/Desktop/Remarket_Api/Application/obj/Debug/net10.0/refint/Application.dll
 /home/Yewint/Desktop/Remarket_Api/Application/obj/Debug/net10.0/Application.pdb
 /home/Yewint/Desktop/Remarket_Api/Application/obj/Debug/net10.0/ref/Application.dll
+/home/Yewint/Desktop/Remarket_Api/Application/obj/Debug/net10.0/Application.sourcelink.json

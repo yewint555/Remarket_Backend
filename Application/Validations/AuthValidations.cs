@@ -48,28 +48,11 @@ public static class ValidationExtensions
     }
 }
 
-public class RegisterV1RequestDtoValidator 
-    : AbstractValidator<RegisterV1RequestDto>
-{
-    public RegisterV1RequestDtoValidator()
-    {
-        RuleFor(x => x.UserName).ValidUserName();
-        RuleFor(x => x.Email).ValidEmail();
-        RuleFor(x => x.AccountType).IsInEnum();
 
-        When(x => !string.IsNullOrWhiteSpace(x.GoogleId), () =>
-        {
-            RuleFor(x => x.GoogleId!)
-                .MinimumLength(10)
-                .WithMessage("GoogleId must be at least 10 characters.");
-        });
-    }
-}
-
-public class RegisterV2RequestDtoValidator 
-    : AbstractValidator<RegisterV2RequestDto>
+public class RegisterRequestDtoValidator 
+    : AbstractValidator<RegisterRequestDto>
 {
-    public RegisterV2RequestDtoValidator()
+    public RegisterRequestDtoValidator()
     {
         RuleFor(x => x.UserName).ValidUserName();
         RuleFor(x => x.Email).ValidEmail();
@@ -104,22 +87,6 @@ public class ResendOtpRequestDtoValidator
     }
 }
 
-public class FinalRegisterRequestDtoValidator 
-    : AbstractValidator<FinalRegisterRequestDto>
-{
-    public FinalRegisterRequestDtoValidator()
-    {
-        RuleFor(x => x.VerificationToken)
-            .NotEmpty().WithMessage("Verification token is required.");
-
-        RuleFor(x => x.Password).StrongPassword();
-
-        RuleFor(x => x.ConfirmPassword)
-            .Equal(x => x.Password)
-            .WithMessage("Passwords do not match.");
-    }
-}
-
 public class LoginRequestDtoValidator 
     : AbstractValidator<LoginRequestDto>
 {
@@ -142,7 +109,7 @@ public class ForgotPasswordRequestDtoValidator
 
 public class ResetPasswordRequestDtoValidator 
     : AbstractValidator<ResetPasswordRequestDto>
-{
+{ 
     public ResetPasswordRequestDtoValidator()
     {
         RuleFor(x => x.ResetToken)

@@ -1,1 +1,1 @@
-{"Version":1,"Hash":"uu8AorH86T4fxrd/guJbRsHz2t553fwz4YGmX67xl84=","Source":"Api","BasePath":"/","Mode":"Root","ManifestType":"Build","ReferencedProjectsConfiguration":[],"DiscoveryPatterns":[],"Assets":[],"Endpoints":[]}
+{"Version":1,"Hash":"rnSyQQes2kRUloI78iMkmzLPafJ5Og3AXPUN9MV7kM0=","Source":"Api","BasePath":"/","Mode":"Root","ManifestType":"Build","ReferencedProjectsConfiguration":[],"DiscoveryPatterns":[{"Name":"Api/wwwroot","Source":"Api","ContentRoot":"/home/Yewint/Desktop/Remarket_Api/Api/wwwroot/","BasePath":"/","Pattern":"**"}],"Assets":[],"Endpoints":[]}

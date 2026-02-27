@@ -1,6 +1,5 @@
 using Application.Dtos;
 using Domain.Entities;
-using Domain.Enum;
 
 namespace Application.Mappings;
 
@@ -14,7 +13,9 @@ public class ProfileMapping
             UserName = dto.UserName,
             Email = dto.Email,
             Phone = dto.PhoneNumber,
-            
+            Images = !string.IsNullOrEmpty(dto.ImageUrl) 
+            ? new List<Image> { new Image { ImgUrl = dto.ImageUrl } } 
+            : new List<Image>()
         };
     }
     public static void MapUpdateToUserEntity(UpdateProfileRequestDto dto, Users u)
@@ -22,12 +23,6 @@ public class ProfileMapping
         u.UserName = dto.UserName;
         u.Phone = dto.PhoneNumber;
         u.Email = dto.Email;
-    }
-
-    public static void MapUpdateToImageEntity(string imageUrl, Image img, Guid userId)
-    {
-        img.ImgUrl = imageUrl;
-        img.UserId = userId;
     }
 
     public static Addresses MapToAdressEntity(Guid userId, VarifyProfileRequestDto dto)
@@ -56,7 +51,6 @@ public class ProfileMapping
             Links = dto.SocialMediaLink
         };
     }
-
 
     public static ProfileResponseDto MapToProfileResponseDto(Users u, Image? i, Addresses? a, SocialMediaLinks? s)
     {
