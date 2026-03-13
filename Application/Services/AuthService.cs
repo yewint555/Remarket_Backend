@@ -5,6 +5,7 @@ using Application.ServiceInterfaces;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Application.Services;
 
@@ -23,8 +24,7 @@ public class AuthService : IAuthService
         _emailService = emailService;
     }
 
-
-    public async Task<string> RegisterAsync(RegisterRequestDto dto)
+    public async Task<string> RegisterV1Async(RegisterRequestDto dto)
     {
         if (dto.Password != dto.ConfirmPassword)
             throw new ArgumentException("Passwords do not match");
@@ -32,7 +32,7 @@ public class AuthService : IAuthService
         if (await _dbcontext.Users.AnyAsync(u => u.Email == dto.Email))
             throw new ArgumentException("Email already registered");
 
-        var user = AuthMapping.MapRegisterToUserEntity(dto);
+        var user = AuthMapping.MapRegisterV1ToUserEntity(dto);
 
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
         user.TrustedVerified = true;
@@ -40,7 +40,23 @@ public class AuthService : IAuthService
         return await SaveToCacheAndSendOtp(dto.Email, user);
     }
 
-    public async Task<LoginResponseDto> VerifyOtpAsync(VerityOtpRequestDto dto)
+    public async Task<string> RegisterV2Async(RegisterRequestDto dto)
+    {
+        if (dto.Password != dto.ConfirmPassword)
+            throw new ArgumentException("Passwords do not match");
+
+        if (await _dbcontext.Users.AnyAsync(u => u.Email == dto.Email))
+            throw new ArgumentException("Email already registered");
+
+        var user = AuthMapping.MapRegisterV2ToUserEntity(dto);
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+        user.TrustedVerified = true;
+
+        return await SaveToCacheAndSendOtp(dto.Email, user);
+    }
+
+    public async Task<LoginResponseDto> VerifyOtpAsync(VerifyOtpRequestDto dto)
     {
         string cleanEmail = dto.Email.ToLower().Trim();
         string otpKey = $"OTP_{cleanEmail}";
@@ -56,7 +72,7 @@ public class AuthService : IAuthService
                 _cache.Remove(otpKey);
                 _cache.Remove(userKey);
 
-                return GenerateAuthResponse(pendingUser!);
+                return await GenerateAuthResponse(pendingUser!);
             }
             throw new ArgumentException("Registration session expired. Please register again.");
         }
@@ -64,39 +80,14 @@ public class AuthService : IAuthService
         throw new ArgumentException("Invalid or expired OTP");
     }
 
-
     public async Task<LoginResponseDto> LoginAsync(LoginRequestDto dto)
     {
         var user = await _dbcontext.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
         if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
             throw new UnauthorizedAccessException("Invalid credentials");
 
-        return GenerateAuthResponse(user);
+        return await GenerateAuthResponse(user);
     }
-
-    public async Task<LoginResponseDto> GoogleLoginAsync(GoogleLoginRequestDto dto)
-    {
-        var user = await _dbcontext.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
-        if (user == null) throw new KeyNotFoundException("User not found. Please register first.");
-
-        return GenerateAuthResponse(user);
-    }
-
-    public async Task<LoginResponseDto> RefreshTokenAsync(RefreshTokenRequestDto dto)
-    {
-        var principal = _tokenService.GetPrincipalFromExpiredToken(dto.RefreshToken);
-        var email = principal?.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
-
-        if (string.IsNullOrEmpty(email))
-            throw new UnauthorizedAccessException("Invalid token payload");
-
-        var user = await _dbcontext.Users.FirstOrDefaultAsync(u => u.Email == email);
-        if (user == null) throw new UnauthorizedAccessException("User not found");
-
-        return GenerateAuthResponse(user);
-    }
-
-
     public async Task<bool> ResendOtpAsync(ResendOtpRequestDto dto)
     {
         if (_cache.TryGetValue($"PendingUser_{dto.Email}", out Users? user))
@@ -107,32 +98,75 @@ public class AuthService : IAuthService
         throw new ArgumentException("Session expired. Please register again.");
     }
 
+    public async Task<LoginResponseDto> RefreshTokenAsync(string accessToken, string refreshToken)
+{
+    var principal = _tokenService.GetPrincipalFromExpiredToken(accessToken);
+    
+    var userId = principal.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value 
+                 ?? principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+    if (string.IsNullOrEmpty(userId))
+        throw new SecurityTokenException("Invalid token payload");
+
+    var user = await _dbcontext.Users.FirstOrDefaultAsync(u => u.Id.ToString() == userId);
+
+    if (user == null || user.RefreshToken != refreshToken || user.RefreshTokenExpiry <= DateTime.UtcNow)
+    {
+        throw new SecurityTokenException("Invalid or expired refresh token. Please login again.");
+    }
+
+    return await GenerateAuthResponse(user);
+}
+
     public async Task<bool> ForgotPasswordAsync(ForgotPasswordRequestDto dto)
     {
         var user = await _dbcontext.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
         if (user == null) throw new KeyNotFoundException("Email not found");
 
         var otp = new Random().Next(100000, 999999).ToString();
-        _cache.Set($"ResetOTP_{dto.Email}", otp, TimeSpan.FromMinutes(5));
+
+        string cleanEmail = dto.Email.ToLower().Trim();
+        _cache.Set($"ResetOTP_{cleanEmail}", otp, TimeSpan.FromMinutes(5));
         
         await _emailService.SendOtpEmailAsync(dto.Email, otp);
         return true;
     }
 
-    public async Task<bool> ResetPasswordAsync(ResetPasswordRequestDto dto)
+    public async Task<bool> VerifyResetOtpAsync(VerifyOtpRequestDto dto)
     {
-        var user = await _dbcontext.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
-        if (user == null) throw new KeyNotFoundException("User not found");
-
-        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
-        await _dbcontext.SaveChangesAsync();
-        return true;
+        string cleanEmail = dto.Email.ToLower().Trim();
+        string cacheKey = $"ResetOTP_{cleanEmail}";
+    
+        if (_cache.TryGetValue(cacheKey, out string? storedOtp) && storedOtp == dto.Otp)
+        {
+            return true;
+        }
+    
+        throw new ArgumentException("Invalid or expired OTP");
     }
 
-    public Task<bool> LogoutAsync()
-    {
-        return Task.FromResult(true);
-    }
+public async Task<bool> ResetPasswordAsync(ResetPasswordRequestDto dto)
+{
+    if (dto.NewPassword != dto.ConfirmPassword)
+        throw new ArgumentException("Passwords do not match");
+
+    await VerifyResetOtpAsync(new VerifyOtpRequestDto(dto.Email, dto.Otp));
+
+    var user = await _dbcontext.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+    if (user == null) throw new KeyNotFoundException("User not found");
+
+    user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+    
+    user.RefreshToken = null; 
+    user.RefreshTokenExpiry = null;
+
+    _dbcontext.Users.Update(user);
+    await _dbcontext.SaveChangesAsync();
+
+    _cache.Remove($"ResetOTP_{dto.Email.ToLower().Trim()}");
+
+    return true;
+}
 
     private async Task<string> SaveToCacheAndSendOtp(string email, Users user)
     {
@@ -146,9 +180,35 @@ public class AuthService : IAuthService
         return "OTP_SENT";
     }
 
-    private LoginResponseDto GenerateAuthResponse(Users user)
-    {
-        var token = _tokenService.GenerateAccessToken(user);
-        return new LoginResponseDto(token, DateTime.UtcNow.AddMinutes(15));
-    }
+    public async Task LogoutAsync(Guid userId)
+{
+    var user = await _dbcontext.Users.FindAsync(userId);
+    if (user == null) throw new KeyNotFoundException("User not found.");
+
+    user.RefreshToken = null;
+    user.RefreshTokenExpiry = null;
+
+    _dbcontext.Users.Update(user);
+    await _dbcontext.SaveChangesAsync();
+}
+
+    private async Task<LoginResponseDto> GenerateAuthResponse(Users user)
+{
+
+    var accessToken = _tokenService.GenerateAccessToken(user);
+    var refreshToken = _tokenService.GenerateRefreshToken();
+    
+    user.RefreshToken = refreshToken;
+    user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(30);
+
+    _dbcontext.Users.Update(user);
+    await _dbcontext.SaveChangesAsync();
+
+    return new LoginResponseDto(
+        AccessToken: accessToken,
+        RefreshToken: refreshToken,
+        RefreshTokenExpiry: user.RefreshTokenExpiry ?? DateTime.UtcNow.AddDays(30),
+        AccountType: user.AccountType.ToString()
+    );
+}
 }

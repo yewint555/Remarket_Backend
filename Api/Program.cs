@@ -4,37 +4,50 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.EntityFrameworkCore;
 using Infrastructure.Persistence;
 using Application.ServiceInterfaces;
-using Application.Validators;
-using FluentValidation.AspNetCore;
-using FluentValidation;
 using Application.Services;
-using System.Linq.Expressions;
+using FluentValidation;
 using Api.Middlewares;
-var builder = WebApplication.CreateBuilder(args);
+using Scalar.AspNetCore;
+using Infrastructure.Services;
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+var builder = WebApplication.CreateBuilder(args);
+var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+
+// 1. Database & DB Context Setup
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<IApplicationDbcontext>(provider => 
+    provider.GetRequiredService<ApplicationDbContext>());
+
+// 2. CORS Policy
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: MyAllowSpecificOrigins,
+        policy => { policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader(); });
+});
+
+// 3. API Services & Caching
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-builder.Services.AddMemoryCache();
+builder.Services.AddMemoryCache(); 
+builder.Services.AddOpenApi(); 
+
+// 4. Dependency Injections
+builder.Services.AddScoped<IFeedService, FeedService>(); 
 builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddScoped<IApplicationDbcontext>(provider => provider.GetRequiredService<ApplicationDbContext>());
-builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+builder.Services.AddScoped<IImageService, ImageService>();
+builder.Services.AddScoped<IPostService, PostService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
 
+// 5. FluentValidation
+builder.Services.AddValidatorsFromAssemblyContaining<IAuthService>();
 
-// Token Validator
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
+// 6. Authentication & JWT Setup
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 .AddJwtBearer(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
@@ -45,27 +58,27 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = builder.Configuration["Jwt:Issuer"],
         ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
-        ClockSkew = TimeSpan.Zero 
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
+        ClockSkew = TimeSpan.Zero,
+        RoleClaimType = System.Security.Claims.ClaimTypes.Role
     };
 });
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// 7. Middleware & OpenAPI Pipeline
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.MapScalarApiReference();
 }
+
 app.UseMiddleware<ExceptionMiddleware>();
-
 app.UseHttpsRedirection();
-
-app.UseAuthentication(); 
+app.UseStaticFiles();
+app.UseCors(MyAllowSpecificOrigins);
+app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();

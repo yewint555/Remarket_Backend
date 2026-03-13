@@ -6,7 +6,7 @@ namespace Application.Mappings;
 
 public class AuthMapping
 {
-    public static Users MapRegisterToUserEntity(RegisterRequestDto dto)
+    public static Users MapRegisterV1ToUserEntity(RegisterRequestDto dto)
     {
         return new Users
         {
@@ -14,8 +14,20 @@ public class AuthMapping
             UserName = dto.UserName,
             Email = dto.Email,
             Phone = dto.PhoneNumber,
-            GoogleId = dto.GoogleId,
             AccountType = Enum.TryParse<AccountTypeStatus>(dto.AccountType, true, out var accountType) ? accountType : AccountTypeStatus.Seller,
+            PasswordHash = dto.Password
+        };
+    }
+
+    public static Users MapRegisterV2ToUserEntity(RegisterRequestDto dto)
+    {
+        return new Users
+        {
+            Id = Guid.NewGuid(),
+            UserName = dto.UserName,
+            Email = dto.Email,
+            Phone = dto.PhoneNumber,
+            AccountType = Enum.TryParse<AccountTypeStatus>(dto.AccountType, true, out var accountType) ? accountType : AccountTypeStatus.Buyer,
             PasswordHash = dto.Password
         };
     }

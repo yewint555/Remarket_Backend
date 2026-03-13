@@ -5,15 +5,14 @@ namespace Application.ServiceInterfaces;
 public interface IAuthService
 {
     // Registration
-    Task<string> RegisterAsync(RegisterRequestDto dto);
+    Task<string> RegisterV1Async(RegisterRequestDto dto);
+    Task<string> RegisterV2Async(RegisterRequestDto dto);
 
     // Login and Token
     Task<LoginResponseDto> LoginAsync(LoginRequestDto dto);
-    Task<LoginResponseDto> GoogleLoginAsync(GoogleLoginRequestDto dto);
-    Task<LoginResponseDto> RefreshTokenAsync(RefreshTokenRequestDto dto);
-
+    Task<LoginResponseDto> RefreshTokenAsync(string accessToken, string refreshToken);
     // Verification (OTP)
-    Task<LoginResponseDto> VerifyOtpAsync(VerityOtpRequestDto dto);
+    Task<LoginResponseDto> VerifyOtpAsync(VerifyOtpRequestDto dto);
     Task<bool> ResendOtpAsync(ResendOtpRequestDto dto);
 
     // Password Reset
@@ -21,5 +20,5 @@ public interface IAuthService
     Task<bool> ResetPasswordAsync(ResetPasswordRequestDto dto);
 
     // Logout
-    Task<bool> LogoutAsync();
+    Task LogoutAsync(Guid userId);
 }

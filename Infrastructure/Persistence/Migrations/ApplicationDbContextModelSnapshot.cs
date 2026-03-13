@@ -17,7 +17,7 @@ namespace Infrastructure.Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.2")
+                .HasAnnotation("ProductVersion", "10.0.3")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -112,6 +112,9 @@ namespace Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("AddressId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -146,6 +149,8 @@ namespace Infrastructure.Persistence.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AddressId");
 
                     b.HasIndex("OrderDate");
 
@@ -195,7 +200,7 @@ namespace Infrastructure.Persistence.Migrations
                         .HasColumnType("nvarchar(50)")
                         .HasDefaultValue("Active");
 
-                    b.Property<Guid>("MarketId")
+                    b.Property<Guid?>("MarketId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("Price")
@@ -206,11 +211,6 @@ namespace Infrastructure.Persistence.Migrations
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("ViewCount")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0);
 
                     b.HasKey("Id");
 
@@ -272,10 +272,6 @@ namespace Infrastructure.Persistence.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
 
-                    b.Property<string>("GoogleId")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
@@ -288,6 +284,12 @@ namespace Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(15)
                         .HasColumnType("nvarchar(15)");
+
+                    b.Property<string>("RefreshToken")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("RefreshTokenExpiry")
+                        .HasColumnType("datetime2");
 
                     b.Property<bool>("TrustedVerified")
                         .ValueGeneratedOnAdd()
@@ -386,6 +388,12 @@ namespace Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Domain.Entities.Orders", b =>
                 {
+                    b.HasOne("Domain.Entities.Addresses", "Address")
+                        .WithMany()
+                        .HasForeignKey("AddressId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Domain.Entities.Posts", "Post")
                         .WithMany()
                         .HasForeignKey("PostId")
@@ -398,6 +406,8 @@ namespace Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
+                    b.Navigation("Address");
+
                     b.Navigation("Post");
 
                     b.Navigation("User");
@@ -408,8 +418,7 @@ namespace Infrastructure.Persistence.Migrations
                     b.HasOne("Domain.Entities.Mark", "Market")
                         .WithMany()
                         .HasForeignKey("MarketId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("Domain.Entities.Users", "User")
                         .WithMany("Posts")

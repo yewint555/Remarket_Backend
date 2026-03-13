@@ -1,13 +1,5 @@
 namespace Application.Dtos;
 
-public record ProfileRequestDto(
-    
-    string UserName,
-    string Email,
-    string PhoneNumber,
-    string? ImageUrl
-);
-
 public record VarifyProfileRequestDto(
     string City,
     string Address,

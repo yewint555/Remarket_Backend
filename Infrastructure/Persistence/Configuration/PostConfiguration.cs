@@ -23,9 +23,6 @@ public class PostConfiguration : IEntityTypeConfiguration<Posts>
         .IsRequired()
         .HasMaxLength(2000);
 
-    builder.Property(p => p.ViewCount)
-        .HasDefaultValue(0);
-
     builder.Property(p => p.BuyerCondition)
         .HasConversion<string>()
         .HasMaxLength(50);

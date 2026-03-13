@@ -33,6 +33,11 @@ public class OrderConfiguration :IEntityTypeConfiguration<Orders>
         .HasForeignKey(o => o.UserId)
         .OnDelete(DeleteBehavior.Restrict); 
 
+    builder.HasOne(o => o.Address)
+            .WithMany() 
+            .HasForeignKey(o => o.AddressId)
+            .OnDelete(DeleteBehavior.Restrict);
+
     builder.HasOne(o => o.Post)
         .WithMany()
         .HasForeignKey(o => o.PostId)
@@ -40,5 +45,7 @@ public class OrderConfiguration :IEntityTypeConfiguration<Orders>
 
     builder.HasIndex(o => o.OrderDate);
     builder.HasIndex(o => o.UserId);
+    builder.HasIndex(o => o.PostId);
+    builder.HasIndex(o => o.AddressId);
 }
 }

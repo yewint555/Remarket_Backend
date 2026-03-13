@@ -22,11 +22,7 @@ public class PostMapping
             ItemStatus = Enum.TryParse<ItemStatus>(dto.ItemStatus, true, out var status) 
                 ? status : ItemStatus.Active,
     
-            Images = dto.ImageUrls.Select(url => new Image 
-            { 
-                Id = Guid.NewGuid(),
-                ImgUrl = url 
-            }).ToList(),
+            Images = new List<Image>()
     
         };
     }
@@ -51,13 +47,13 @@ public static void MapUpdateDtoToEntity(UpdatePostDto dto, Posts existingPost)
     existingPost.Price = dto.Price;
     existingPost.Description = dto.Description;
     
-    if (Enum.TryParse(dto.ItemCondition, out ItemCondition condition))
+    if (Enum.TryParse(dto.ItemCondition, true, out ItemCondition condition))
         existingPost.ItemCondition = condition;
         
-    if (Enum.TryParse(dto.ItemStatus, out ItemStatus status))
+    if (Enum.TryParse(dto.ItemStatus, true, out ItemStatus status))
         existingPost.ItemStatus = status;
 
-    existingPost.Images = dto.ImageUrls.Select(url => new Image { ImgUrl = url }).ToList();
+    // existingPost.Images = dto.ImageUrls.Select(url => new Image { ImgUrl = url }).ToList();
     
     existingPost.UpdatedAt = DateTime.UtcNow;
 }

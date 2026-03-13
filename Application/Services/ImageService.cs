@@ -1,7 +1,4 @@
 using Microsoft.AspNetCore.Hosting;
-using System;
-using System.IO;
-using System.Threading.Tasks;
 
 namespace Application.Services;
 
@@ -33,11 +30,13 @@ public class ImageService : IImageService
             byte[] imageBytes = Convert.FromBase64String(base64Data);
 
             string wwwRootPath = _env.WebRootPath;
-
             if (string.IsNullOrEmpty(wwwRootPath))
             {
                 wwwRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
             }
+
+            if (!Directory.Exists(wwwRootPath))
+                Directory.CreateDirectory(wwwRootPath);
 
             var relativeFolder = Path.Combine("uploads", folderName);
             var absoluteFolder = Path.Combine(wwwRootPath, relativeFolder);
@@ -49,11 +48,11 @@ public class ImageService : IImageService
             var filePath = Path.Combine(absoluteFolder, fileName);
 
             await File.WriteAllBytesAsync(filePath, imageBytes);
-
             return $"/{relativeFolder}/{fileName}".Replace("\\", "/");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Console.WriteLine($"Image Save Error: {ex.Message}");
             return null!;
         }
     }

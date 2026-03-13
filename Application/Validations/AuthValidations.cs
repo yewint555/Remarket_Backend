@@ -48,7 +48,6 @@ public static class ValidationExtensions
     }
 }
 
-
 public class RegisterRequestDtoValidator 
     : AbstractValidator<RegisterRequestDto>
 {
@@ -58,18 +57,11 @@ public class RegisterRequestDtoValidator
         RuleFor(x => x.Email).ValidEmail();
         RuleFor(x => x.PhoneNumber).ValidPhoneNumber();
         RuleFor(x => x.AccountType).IsInEnum();
-
-        When(x => !string.IsNullOrWhiteSpace(x.GoogleId), () =>
-        {
-            RuleFor(x => x.GoogleId!)
-                .MinimumLength(10)
-                .WithMessage("GoogleId must be at least 10 characters.");
-        });
     }
 }
 
 public class VerifyOtpRequestDtoValidator 
-    : AbstractValidator<VerityOtpRequestDto>
+    : AbstractValidator<VerifyOtpRequestDto>
 {
     public VerifyOtpRequestDtoValidator()
     {
@@ -104,17 +96,5 @@ public class ForgotPasswordRequestDtoValidator
     public ForgotPasswordRequestDtoValidator()
     {
         RuleFor(x => x.Email).ValidEmail();
-    }
-}
-
-public class ResetPasswordRequestDtoValidator 
-    : AbstractValidator<ResetPasswordRequestDto>
-{ 
-    public ResetPasswordRequestDtoValidator()
-    {
-        RuleFor(x => x.ResetToken)
-            .NotEmpty().WithMessage("Reset token is required.");
-
-        RuleFor(x => x.NewPassword).StrongPassword();
     }
 }

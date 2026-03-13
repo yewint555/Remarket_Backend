@@ -4,14 +4,13 @@ namespace Application.Dtos;
 		string UserName,
 		string Email,
 		string PhoneNumber,
-		string GoogleId,
 		string Password,
 		string ConfirmPassword,
 		string AccountType
 
 	);
 
-	public record VerityOtpRequestDto(
+	public record VerifyOtpRequestDto(
 		string Email,
 		string Otp
 	);
@@ -22,32 +21,29 @@ namespace Application.Dtos;
 	);
 	public record LoginResponseDto(
 		string AccessToken,
-		DateTime Expiration
+		string RefreshToken,
+		DateTime RefreshTokenExpiry,
+		string AccountType
+	);
+
+	public record RefreshTokenRequestDto(
+		string AccessToken,
+		string RefreshToken
 	);
 
 	public record ResendOtpRequestDto(
 		string Email
 	);
-
-	public record RefreshTokenRequestDto(
-		string RefreshToken
-	);
-
-	public record GoogleLoginRequestDto(
-		string GoogleToken,
-		string Email
-	);
-
-
 	public record ForgotPasswordRequestDto(
 		string Email
 	);
-	public record ResetPasswordRequestDto(
-		string Email,
-		string ResetToken,
-		string NewPassword
-	);
 
+	public record ResetPasswordRequestDto(
+    string Email,
+    string Otp,
+    string NewPassword,
+    string ConfirmPassword
+);
 
 
 

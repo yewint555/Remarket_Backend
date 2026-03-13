@@ -9,7 +9,6 @@ public class Posts : BaseEntity<Guid>
     public string ItemName { get; set; } = default!;
     public decimal Price { get; set; }
     public string Description { get; set; } = default!;
-    public int ViewCount { get; set; } = 0;
 
     // Enum
     public BuyerCondition BuyerCondition { get; set; } = default!;
@@ -19,7 +18,7 @@ public class Posts : BaseEntity<Guid>
     // Foreign Keys
     public Guid UserId { get; set; }
     public virtual Users User { get; set; } = default!;
-    public Guid MarketId { get; set; }
+    public Guid? MarketId { get; set; }
     public virtual Mark Market { get; set; } = default!;
 
     // Navigation Properties

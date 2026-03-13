@@ -5,19 +5,6 @@ namespace Application.Mappings;
 
 public class ProfileMapping
 {
-    public static Users MapToUserEntity(ProfileRequestDto dto)
-    {
-        return new Users
-        {
-            Id = Guid.NewGuid(),
-            UserName = dto.UserName,
-            Email = dto.Email,
-            Phone = dto.PhoneNumber,
-            Images = !string.IsNullOrEmpty(dto.ImageUrl) 
-            ? new List<Image> { new Image { ImgUrl = dto.ImageUrl } } 
-            : new List<Image>()
-        };
-    }
     public static void MapUpdateToUserEntity(UpdateProfileRequestDto dto, Users u)
     {
         u.UserName = dto.UserName;

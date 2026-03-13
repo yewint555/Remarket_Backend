@@ -2,17 +2,18 @@ using Application.Dtos;
 using Application.ServiceInterfaces;
 using Microsoft.EntityFrameworkCore;
 using Application.Mappings;
-using Domain.Entities;
 
 namespace Application.Services;
 
 public class ProfileService : IProfileService
 {
     private readonly IApplicationDbcontext _dbContext;
+    private readonly IImageService _imageService;
 
-    public ProfileService(IApplicationDbcontext dbContext)
+    public ProfileService(IApplicationDbcontext dbContext, IImageService imageService)
     {
         _dbContext = dbContext;
+        _imageService = imageService;
     }
 
     public async Task<ProfileResponseDto> GetProfileAsync(Guid userId)
@@ -37,45 +38,32 @@ public class ProfileService : IProfileService
             user.SocialMediaLinks?.FirstOrDefault()!
         );
     }
-
-    public async Task<ProfileResponseDto> CreateProfileAsync(Guid userId, ProfileRequestDto dto)
-    {
-        var user = ProfileMapping.MapToUserEntity(dto);
-        user.Id = userId;
-
-        _dbContext.Users.Add(user);
-        await _dbContext.SaveChangesAsync();
-
-        return ProfileMapping.MapToProfileResponseDto(user, null, null, null);
-    }
-
     public async Task<ProfileResponseDto> UpdateProfileAsync(Guid userId, UpdateProfileRequestDto dto)
+{
+    var user = await _dbContext.Users
+        .Include(u => u.Images)
+        .FirstOrDefaultAsync(u => u.Id == userId);
+
+    if (user == null) throw new KeyNotFoundException("User not found");
+
+    ProfileMapping.MapUpdateToUserEntity(dto, user);
+
+    if (!string.IsNullOrEmpty(dto.ImageUrl))
     {
-        var user = await _dbContext.Users
-            .Include(u => u.Images)
-            .FirstOrDefaultAsync(u => u.Id == userId);
+        var savedImagePath = await _imageService.SaveImageAsync(dto.ImageUrl, "profiles");
 
-        if (user == null) 
-            throw new KeyNotFoundException("User not found");
-
-        ProfileMapping.MapUpdateToUserEntity(dto, user);
-
-        if (!string.IsNullOrEmpty(dto.ImageUrl))
+        user.Images.Add(new Image
         {
-            user.Images.Add(
-                new Image
-                {
-                    UserId = userId,
-                    ImgUrl = dto.ImageUrl,
-                    CreatedAt = DateTime.UtcNow
-                }
-            );
-        }
-
-        await _dbContext.SaveChangesAsync();
-        
-        return await GetProfileAsync(userId); 
+            UserId = userId,
+            ImgUrl = savedImagePath,
+            ImgPath = savedImagePath, 
+            CreatedAt = DateTime.UtcNow
+        });
     }
+
+    await _dbContext.SaveChangesAsync();
+    return await GetProfileAsync(userId); 
+}
 
     public async Task<ProfileResponseDto> VerifyProfileAsync(Guid userId, VarifyProfileRequestDto dto)
     {

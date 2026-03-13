@@ -13,6 +13,8 @@ public class Orders : BaseEntity<Guid>
     public OrderComfirmStatus OrderComfirmationStatus { get; set; } = default!;
 
     // Foreign Keys
+    public Guid AddressId { get; set; }
+    public virtual Addresses Address { get; set; } = default!;
     public Guid UserId { get; set; }
     public virtual Users User { get; set; } = default!;
     public Guid PostId { get; set; }

@@ -32,10 +32,6 @@ public class UserConfigurations : IEntityTypeConfiguration<Users>
             .IsRequired()
             .HasMaxLength(20);
 
-        builder.Property(u => u.GoogleId)
-            .HasMaxLength(255)
-            .IsRequired(false);
-
         builder.Property(u => u.TrustedVerified)
             .HasDefaultValue(false);
 
